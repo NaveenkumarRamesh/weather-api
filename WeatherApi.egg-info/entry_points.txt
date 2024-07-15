@@ -1,0 +1,2 @@
+[console_scripts]
+run-main = weather_api:run_main_script
