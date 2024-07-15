@@ -47,17 +47,17 @@ def load_into_mongodb(data, collection, collection_name):
     data_dicts = data.to_dict(orient='records')
     for data_dict in data_dicts:
         query = {'datetime': data_dict['datetime']}
-        try:
-            result = collection.update_one(
-                query, {'$set': data_dict}, upsert=True)
-            if result.upserted_id is not None:
-                print(f"Document inserted with _id: {result.upserted_id}")
-            else:
-                print("Document updated.")
-        except Exception as e:
-            print(f"Failed to perform upsert operation: {e}")
-            print(
-                f"Successfully inserted {len(data_dict)} documents into MongoDB collection '{collection_name}'.")
+        existing_doc = collection.find_one(query)
+        if existing_doc:
+            print("Document already exists. Skipping insertion.")
+        else:
+            try:
+                result = collection.insert_one(data_dict)
+                print(f"Document inserted with _id: {result.inserted_id}")
+            except Exception as e:
+                print(f"Failed to insert document: {e}")
+                print(
+                    f"Successfully inserted {len(data_dict)} documents into MongoDB collection '{collection_name}'.")
 
 
 def start_up():
@@ -76,7 +76,6 @@ def start_up():
             try:
                 index_info = collection.index_information()
                 for index in index_info:
-                    print("indexws::::", index_info[index]['key'][0][0])
                     if index_info[index]['key'][0][0] == index_fields:
                         index_exists = True
                         break
